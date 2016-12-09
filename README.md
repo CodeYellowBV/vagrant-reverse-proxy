@@ -49,10 +49,11 @@ value of `foo`.  This is only done for virtual machines that have
 
 #### Server Blocks
 
-The plugin also writes `server` block configuration for the enabled VMs so that they can be
-accessed directly via their hostname (as long as the hostname resolves to the host machine's IP address).
+The plugin also writes `server` block configuration for the enabled
+VMs so that they can be accessed directly via their hostname (as long
+as the hostname resolves to the host machine's IP address).
 
-To include these, simply include the generated file inside your main nginx `http` block:
+To include these, simply include the generated file inside your main NGINX `http` block:
 
     http {
         include "vagrant-proxy-config-servers";
@@ -86,7 +87,10 @@ instead of the default port (which is port 80).
 
 ### Specifying the NGINX configuration file paths
 
-If you want to change the location of the managed nginx configuration files, set the `config.reverse_proxy.nginx_locations_config_file` or `config.reverse_proxy.nginx_servers_config_file` values to paths on your host machine in the Vagrantfile configuration:
+If you want to change the location of the managed NGINX configuration
+files, set the `config.reverse_proxy.nginx_locations_config_file` or
+`config.reverse_proxy.nginx_servers_config_file` values to paths on
+your host machine in the Vagrantfile configuration:
 
     config.reverse_proxy.nginx_locations_config_file = '/usr/local/etc/nginx/vagrant-proxy-config-locations'
     config.reverse_proxy.nginx_servers_config_file = '/usr/local/etc/nginx/vagrant-proxy-config-servers'
@@ -95,7 +99,11 @@ If you don't want to generate one of the locations or server configuration files
 
 ### Specifying the NGINX reload command
 
-After the NGINX configuration file is generated, a reload command is executed so that the changes take effect. By default the command executed is `sudo nginx -s reload`. If you need to change this, set the `config.reverse_proxy.nginx_reload_command` option to the command to be executed:
+After the NGINX configuration file is generated, a reload command is
+executed so that the changes take effect. By default the command
+executed is `sudo nginx -s reload`. If you need to change this, set
+the `config.reverse_proxy.nginx_reload_command` option to the command
+to be executed:
 
     config.reverse_proxy.nginx_reload_command = 'sudo service nginx reload'
 
@@ -128,7 +136,10 @@ add a bit of custom code there if you need to override the base URL.
 
 ## Changelog
 
-- master Add support for `vagrant reload` (thanks to Sam Stevens).
+- 0.4.0 Add support for `vagrant reload`, add support for host-based instead
+  of location-based dispatching (both thanks to Sam Stevens). NOTE: This is a
+  backwards incompatible change: the default name of the config file has
+  changed, so you must update the `include` statement in your NGINX config.
 - 0.3.1 Allow overriding the NGINX reload command (thanks to Sam Stevens).
 - 0.3 Allow overriding the location of the NGINX configuration file
   (thanks to Sam Stevens).  Support multiple VMs in a single Vagrant
