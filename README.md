@@ -25,18 +25,19 @@ Install the plugin as usual:
 
 First, install NGINX and create a configuration as usual.  Then, in
 the `server` configuration block for the host you want to use for
-proxying, simply put `include "vagrant-proxy-config";` in the file.
+proxying, simply put `include "vagrant-proxy-config-locations";` in the file.
 
 If you don't need anything specific, just put the following in
 `/etc/nginx/sites-enabled/default`:
 
     server {
-        listen [::]:80 default ipv6only=off;
+        listen 80 default;
+        listen [::]:80 default;
         # This is the fallback server
         server_name default;
         # Redirect http://localhost/hostname/lalala
         # to http://hostname/lalala
-        include "vagrant-proxy-config";
+        include "vagrant-proxy-config-locations";
     }
 
 This will load the `/etc/nginx/vagrant-proxy-config` file which is
@@ -46,9 +47,20 @@ proxy to port 80 on the virtual machine with a `config.vm.hostname`
 value of `foo`.  This is only done for virtual machines that have
 `config.reverse_proxy.enabled` set to `true` in their config.
 
+#### Server Blocks
+
+The plugin also writes `server` block configuration for the enabled VMs so that they can be
+accessed directly via their hostname (as long as the hostname resolves to the host machine's IP address).
+
+To include these, simply include the generated file inside your main nginx `http` block:
+
+    http {
+        include "vagrant-proxy-config-servers";
+    }
+
+
 Whenever you bring up, halt, or reload a machine, the plugin updates the proxy
-config file and invokes `sudo nginx -s reload` to make the
-change immediately visible.
+config files and invokes `sudo nginx -s reload` to make the change immediately visible.
 
 ### Custom host names
 
@@ -72,11 +84,14 @@ an array:
 As you can see, this allows you to define which port to connect to
 instead of the default port (which is port 80).
 
-### Specifying the NGINX configuration file path
+### Specifying the NGINX configuration file paths
 
-If you want to change the location of the managed nginx configuration file, set the `config.reverse_proxy.nginx_config_file` value to a path on your host machine in the Vagrantfile configuration:
+If you want to change the location of the managed nginx configuration files, set the `config.reverse_proxy.nginx_locations_config_file` or `config.reverse_proxy.nginx_servers_config_file` values to paths on your host machine in the Vagrantfile configuration:
 
-    config.reverse_proxy.nginx_config_file = '/usr/local/etc/nginx/vagrant-proxy-config'
+    config.reverse_proxy.nginx_locations_config_file = '/usr/local/etc/nginx/vagrant-proxy-config-locations'
+    config.reverse_proxy.nginx_servers_config_file = '/usr/local/etc/nginx/vagrant-proxy-config-servers'
+
+If you don't want to generate one of the locations or server configuration files, set the appropriate config value to `nil`.
 
 ### Specifying the NGINX reload command
 

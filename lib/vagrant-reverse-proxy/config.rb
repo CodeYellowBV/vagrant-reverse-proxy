@@ -2,13 +2,14 @@ module VagrantPlugins
   module ReverseProxy
     class Plugin
       class Config < Vagrant.plugin(2, :config)
-        attr_accessor :enabled, :vhosts, :nginx_config_file, :nginx_reload_command
+        attr_accessor :enabled, :vhosts, :nginx_locations_config_file, :nginx_servers_config_file, :nginx_reload_command
         alias_method :enabled?, :enabled
 
         def initialize
           @enabled = UNSET_VALUE
           @vhosts = UNSET_VALUE
-          @nginx_config_file = UNSET_VALUE
+          @nginx_locations_config_file = UNSET_VALUE
+          @nginx_servers_config_file = UNSET_VALUE
           @nginx_reload_command = UNSET_VALUE
         end
 
@@ -31,8 +32,11 @@ module VagrantPlugins
               end
             end
           end
-          if @nginx_config_file == UNSET_VALUE
-            @nginx_config_file = nil
+          if @nginx_locations_config_file == UNSET_VALUE
+            @nginx_locations_config_file = '/etc/nginx/vagrant-proxy-config-locations'
+          end
+          if @nginx_servers_config_file == UNSET_VALUE
+            @nginx_servers_config_file = '/etc/nginx/vagrant-proxy-config-servers'
           end
           if @nginx_reload_command == UNSET_VALUE
             @nginx_reload_command = nil
@@ -69,8 +73,16 @@ module VagrantPlugins
             errors << 'vhosts must be an array of hostnames, a string=>string hash or nil'
           end
 
-          unless @nginx_config_file.instance_of?(String) || @nginx_config_file == nil || @nginx_config_file == UNSET_VALUE
-            errors << 'nginx_config_file must be a string'
+          unless @nginx_locations_config_file.instance_of?(String) || @nginx_locations_config_file == nil || @nginx_locations_config_file == UNSET_VALUE
+            errors << 'nginx_locations_config_file must be a string'
+          end
+
+          unless @nginx_servers_config_file.instance_of?(String) || @nginx_servers_config_file == nil || @nginx_servers_config_file == UNSET_VALUE
+            errors << 'nginx_servers_config_file must be a string'
+          end
+
+          if @nginx_locations_config_file == nil && @nginx_servers_config_file == nil
+            errors << 'only one of nginx_locations_config_file and nginx_servers_config_file can be nil'
           end
 
           unless @nginx_reload_command.instance_of?(String) || @nginx_reload_command == nil || @nginx_reload_command == UNSET_VALUE
