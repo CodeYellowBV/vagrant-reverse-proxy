@@ -2,7 +2,7 @@ module VagrantPlugins
   module ReverseProxy
     class Plugin
       class Config < Vagrant.plugin(2, :config)
-        attr_accessor :enabled, :vhosts, :nginx_locations_config_file, :nginx_servers_config_file, :nginx_reload_command
+        attr_accessor :enabled, :vhosts, :nginx_locations_config_file, :nginx_servers_config_file, :nginx_reload_command, :nginx_extra_config
         alias_method :enabled?, :enabled
 
         def initialize
@@ -11,6 +11,7 @@ module VagrantPlugins
           @nginx_locations_config_file = UNSET_VALUE
           @nginx_servers_config_file = UNSET_VALUE
           @nginx_reload_command = UNSET_VALUE
+          @nginx_extra_config = UNSET_VALUE
         end
 
         def finalize!
@@ -19,18 +20,22 @@ module VagrantPlugins
             @vhosts = nil
           elsif @vhosts.is_a?(Array)
             # Convert to canonical hash form of
-            # {path => {:host => name, :port => num}}
+            # {path => {:host => name, :port => num, :nginx_extra_config => str}}
             vhosts_hash = {}
-            @vhosts.each {|entry| vhosts_hash[entry] = {:host => entry, :port => 80} }
+            @vhosts.each {|entry| vhosts_hash[entry] = {:host => entry, :port => 80, :nginx_extra_config => ""} }
             @vhosts = vhosts_hash
           elsif @vhosts.is_a?(Hash)
             @vhosts.each do |key, value|
               if (value.is_a?(String))
-                @vhosts[key] = {:host => value, :port => 80}
+                @vhosts[key] = {:host => value, :port => 80,  :nginx_extra_config => ""}
               else
                 value[:port] ||= 80
+                value[:nginx_extra_config] ||= ""
               end
             end
+          end
+          if @nginx_extra_config == UNSET_VALUE
+            @nginx_extra_config = nil
           end
           if @nginx_locations_config_file == UNSET_VALUE
             @nginx_locations_config_file = '/etc/nginx/vagrant-proxy-config-locations'
@@ -71,6 +76,10 @@ module VagrantPlugins
             end
           elsif @vhosts != nil && @vhosts != UNSET_VALUE
             errors << 'vhosts must be an array of hostnames, a string=>string hash or nil'
+          end
+
+          unless @nginx_extra_config.instance_of?(String) || @nginx_extra_config == nil || @nginx_extra_config == UNSET_VALUE
+            errors << 'nginx_extra_config must be a string'
           end
 
           unless @nginx_locations_config_file.instance_of?(String) || @nginx_locations_config_file == nil || @nginx_locations_config_file == UNSET_VALUE

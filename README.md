@@ -107,6 +107,36 @@ to be executed:
 
     config.reverse_proxy.nginx_reload_command = 'sudo service nginx reload'
 
+### Adding custom NGINX configuration to your proxy
+
+Sometimes the standard settings are not enough, and you'll need
+additional custom configuration in a proxy block.  A good example is
+when you want to support websockets; in order to do that, you need to
+force NGINX to use HTTP/1.1 and pass on any `upgrade` headers to the
+downstream server.
+
+To do this, you can add a global setting that will affect all vhosts:
+
+    config.reverse_proxy.nginx_extra_config = <<EOF
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    EOF
+
+If you have a particular setting that applies to a single vhost only,
+you can set a similar property in the vhost hash:
+
+    config.reverse_proxy.vhosts = {
+        "bar" => {:host => "bar.test",
+                  :nginx_extra_config => "proxy_http_version 1.1;\nproxy_set_header Upgrade $http_upgrade;\n"}
+    }
+
+These "extra configs" will be appended to the configuration, with the
+vhost-specific one last.  Of course, for more complicated
+configuration you can just use the NGINX `include` directive to load
+an extra file.  **NOTE:** Remember that all NGINX config directives
+require a trailing semicolon, or the config will be invalid!
+
 ## Adding proxy support to your application
 
 This plugin will instruct NGINX to pass the following headers to your
@@ -136,6 +166,7 @@ add a bit of custom code there if you need to override the base URL.
 
 ## Changelog
 
+- 0.5.0 Add support for `nginx_extra_config` setting (Fixes ticket #8).
 - 0.4.0 Add support for `vagrant reload`, add support for host-based instead
   of location-based dispatching (both thanks to Sam Stevens). NOTE: This is a
   backwards incompatible change: the default name of the config file has

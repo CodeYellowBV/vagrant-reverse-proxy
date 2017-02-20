@@ -93,7 +93,7 @@ module VagrantPlugins
           end
           ip = get_ip_address(machine)
           vhosts.collect do |path, vhost|
-            # Rewrites are matches literally by nginx, which means
+            # Rewrites are matched literally by nginx, which means
             # http://host:80/... will NOT match http://host/...!
             port_suffix = vhost[:port] == 80 ? '' : ":#{vhost[:port]}"
             <<EOF
@@ -108,6 +108,9 @@ location /#{path}/ {
 
     proxy_pass http://#{ip}#{port_suffix}/;
     proxy_redirect http://#{vhost[:host]}#{port_suffix}/ /#{path}/;
+
+    #{vhost[:nginx_extra_config]}
+    #{machine.config.reverse_proxy.nginx_extra_config}
 }
 EOF
           end.join("\n")
@@ -122,7 +125,7 @@ EOF
           end
           ip = get_ip_address(machine)
           vhosts.collect do |path, vhost|
-            # Rewrites are matches literally by nginx, which means
+            # Rewrites are matched literally by nginx, which means
             # http://host:80/... will NOT match http://host/...!
             port_suffix = vhost[:port] == 80 ? '' : ":#{vhost[:port]}"
             <<EOF
@@ -140,7 +143,11 @@ server {
         proxy_set_header X-Forwarded-Port $server_port;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
+
         proxy_pass http://#{ip}#{port_suffix}/;
+
+        #{vhost[:nginx_extra_config]}
+        #{machine.config.reverse_proxy.nginx_extra_config}
     }
 }
 EOF
